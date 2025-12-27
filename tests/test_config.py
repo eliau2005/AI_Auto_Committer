@@ -11,7 +11,7 @@ def mock_load_dotenv():
 
 # Test 1: Load from .env
 def test_load_config_from_env():
-    with patch.dict(os.environ, {"API_KEY": "test_key", "MODEL_NAME": "test_model"}):
+    with patch.dict(os.environ, {"OPENROUTER_API_KEY": "test_key", "MODEL_NAME": "test_model"}):
         config = ConfigManager()
         assert config.api_key == "test_key"
         assert config.model_name == "test_model"
@@ -26,7 +26,7 @@ def test_missing_api_key():
 
 # Test 3: Default values
 def test_default_values():
-    with patch.dict(os.environ, {"API_KEY": "key"}, clear=True):
+    with patch.dict(os.environ, {"OPENROUTER_API_KEY": "key"}, clear=True):
         config = ConfigManager()
         assert config.model_name == "gpt-4o-mini" # Assuming default from spec example
 

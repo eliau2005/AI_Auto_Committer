@@ -6,7 +6,10 @@ class AIService:
         self.config = ConfigManager()
         self.client = None
         if self.config.api_key:
-            self.client = OpenAI(api_key=self.config.api_key)
+            self.client = OpenAI(
+                base_url=self.config.api_base_url,
+                api_key=self.config.api_key,
+            )
 
     def generate_commit_message(self, diff_text):
         if not self.client:
