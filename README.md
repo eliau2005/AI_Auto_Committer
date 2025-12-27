@@ -29,7 +29,7 @@ AI Auto-Committer is a powerful desktop application that streamlines your Git wo
 
 ### Option 1: Download Executable (Windows)
 
-**[📥 Download AI_Auto_Committer.exe]([https://github.com/eliau2005/AI_Auto_Committer/raw/main/dist/AI_Auto_Committer.exe](https://github.com/eliau2005/AI_Auto_Committer/raw/refs/heads/master/dist/AI_Auto_Committer.exe))**
+**[📥 Download AI_Auto_Committer.exe](https://github.com/eliau2005/AI_Auto_Committer/raw/refs/heads/master/dist/AI_Auto_Committer.exe)**
 
 1. Download the executable from the link above
 2. Run `AI_Auto_Committer.exe`
