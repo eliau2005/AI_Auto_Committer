@@ -1,5 +1,6 @@
 from openai import OpenAI
 from config import ConfigManager
+from exceptions import APIKeyError, AIServiceError
 
 class AIService:
     def __init__(self):
@@ -13,7 +14,7 @@ class AIService:
 
     def generate_commit_message(self, diff_text):
         if not self.client:
-            return "Error: API Key not configured."
+            raise APIKeyError("API Key not configured. Please check your .env file.")
 
         if not diff_text or not diff_text.strip():
              return "Error: No changes detected to generate a message."
@@ -40,4 +41,7 @@ class AIService:
             )
             return response.choices[0].message.content.strip()
         except Exception as e:
-            return f"Error generating commit message: {str(e)}"
+            error_str = str(e).lower()
+            if "bx" in error_str or "401" in error_str or "unauthorized" in error_str or "api key" in error_str:
+                raise APIKeyError(f"Invalid or missing API Key. Server returned: {e}", original_error=e)
+            raise AIServiceError(f"AI Service Error: {e}", original_error=e)

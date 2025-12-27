@@ -3,6 +3,31 @@ from tkinter import filedialog, END
 import threading
 from git_service import GitService
 from ai_service import AIService
+from exceptions import APIKeyError, AIServiceError, NetworkError
+
+class ErrorDialog(ctk.CTkToplevel):
+    def __init__(self, parent, title, message):
+        super().__init__(parent)
+        self.title("Error")
+        self.geometry("400x200")
+        # Center the window
+        self.update_idletasks()
+        x = parent.winfo_x() + (parent.winfo_width() // 2) - 200
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - 100
+        self.geometry(f"+{x}+{y}")
+        
+        self.attributes("-topmost", True)
+        self.transient(parent)
+        self.grab_set() # Make modal
+        
+        lbl_title = ctk.CTkLabel(self, text=title, font=("Helvetica", 16, "bold"), text_color="#ff5555")
+        lbl_title.pack(pady=(20, 10), padx=20)
+        
+        lbl_msg = ctk.CTkLabel(self, text=message, wraplength=350)
+        lbl_msg.pack(pady=10, padx=20)
+        
+        btn = ctk.CTkButton(self, text="Dismiss", command=self.destroy, fg_color="#ff5555", hover_color="#cc0000")
+        btn.pack(pady=(10, 20))
 
 class AutoCommitterApp(ctk.CTk):
     def __init__(self):
@@ -67,6 +92,9 @@ class AutoCommitterApp(ctk.CTk):
         self.terminal_text.see(END)
         self.terminal_text.configure(state="disabled")
 
+    def show_error(self, title, message):
+        ErrorDialog(self, title, message)
+
     def select_directory(self):
         path = filedialog.askdirectory()
         if path:
@@ -105,16 +133,25 @@ class AutoCommitterApp(ctk.CTk):
             title = parts[0].strip()
             description = parts[1].strip() if len(parts) > 1 else ""
             
-            # Update UI in main thread
-            self.title_entry.delete(0, END)
-            self.title_entry.insert(0, title)
-            
-            self.desc_text.delete("0.0", END)
-            self.desc_text.insert("0.0", description)
-            
-            self.log("Message generated.")
+            # Update UI in main thread (using after to be thread-safe)
+            self.after(0, lambda: self._update_ui_with_message(title, description))
+            self.after(0, lambda: self.log("Message generated."))
+
+        except APIKeyError as e:
+            self.after(0, lambda: self.show_error("API Authentication Error", str(e)))
+            self.after(0, lambda: self.log(f"API Error: {e}"))
+        except AIServiceError as e:
+            self.after(0, lambda: self.show_error("AI Service Error", str(e)))
+            self.after(0, lambda: self.log(f"AI Error: {e}"))
         except Exception as e:
-            self.log(f"Error: {e}")
+            self.after(0, lambda: self.show_error("Unexpected Error", str(e)))
+            self.after(0, lambda: self.log(f"Error: {e}"))
+
+    def _update_ui_with_message(self, title, description):
+        self.title_entry.delete(0, END)
+        self.title_entry.insert(0, title)
+        self.desc_text.delete("0.0", END)
+        self.desc_text.insert("0.0", description)
 
     def commit_changes(self):
         path = self.repo_path.get()
@@ -143,6 +180,7 @@ class AutoCommitterApp(ctk.CTk):
              self.desc_text.delete("0.0", END)
         except Exception as e:
              self.log(f"Commit Error: {e}")
+             self.show_error("Commit Failed", str(e))
 
 if __name__ == "__main__":
     app = AutoCommitterApp()
