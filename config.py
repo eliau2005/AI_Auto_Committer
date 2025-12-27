@@ -21,7 +21,8 @@ class ConfigManager:
                 "recent_repos": [], 
                 "provider": "gemini", 
                 "system_prompt": None,
-                "window_geometry": {"width": 600, "height": 500} 
+                "window_geometry": {"width": 600, "height": 500},
+                "theme": "Dark"
             }
             try:
                 with open(self.settings_file, 'w') as f:
@@ -38,13 +39,15 @@ class ConfigManager:
                 if "provider" not in data: data["provider"] = "gemini"
                 if "system_prompt" not in data: data["system_prompt"] = None
                 if "window_geometry" not in data: data["window_geometry"] = {"width": 600, "height": 500}
+                if "theme" not in data: data["theme"] = "Dark"
                 return data
         except:
              return {
                 "recent_repos": [], 
                 "provider": "gemini", 
                 "system_prompt": None,
-                "window_geometry": {"width": 600, "height": 500}
+                "window_geometry": {"width": 600, "height": 500},
+                "theme": "Dark"
             }
 
     def save_settings(self):
@@ -110,4 +113,11 @@ class ConfigManager:
 
     def set_window_geometry(self, width, height):
         self.settings["window_geometry"] = {"width": width, "height": height}
+        self.save_settings()
+
+    def get_theme(self):
+        return self.settings.get("theme", "Dark")
+
+    def set_theme(self, theme):
+        self.settings["theme"] = theme
         self.save_settings()

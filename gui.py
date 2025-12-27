@@ -20,6 +20,18 @@ COLOR_ERROR = "#f44336"
 PADDING_STD = 20
 PADDING_INNER = 10
 
+# Theme Colors (Light, Dark)
+COLOR_BG_MAIN = ("#fcfbf4", "#2b2b2b") # Cream White / Dark Gray
+COLOR_SIDEBAR = ("#e8e6f0", "#2b2b2b") # Light Purple-Gray / Dark Gray
+COLOR_TEXT = ("#2d2d2d", "#DCE4EE") # Very Dark Gray / Light
+COLOR_BTN_PRIMARY = ("#7e57c2", "#5c6bc0") # Purple / Indigo
+COLOR_BTN_HOVER = ("#673ab7", "#3949ab")
+COLOR_DIFF_BG = ("#ffffff", "#1e1e1e")
+COLOR_DIFF_TEXT = ("#1a1a1a", "#d4d4d4")
+COLOR_HEADER_BTN_TEXT = ("#2d2d2d", "#DCE4EE") # Very Dark Gray / Light
+COLOR_LABEL_TEXT = ("#1a1a1a", "#DCE4EE") # Almost Black / Light
+
+
 class ErrorDialog(ctk.CTkToplevel):
     def __init__(self, parent, title, message):
         super().__init__(parent)
@@ -127,13 +139,26 @@ class SettingsDialog(ctk.CTkToplevel):
         prompt_label.grid(row=7, column=0, sticky="ew", pady=(0, 5))
         
         self.prompt_entry = ctk.CTkEntry(main_frame, placeholder_text="Override default prompt...", height=40, font=get_font_main())
-        self.prompt_entry.grid(row=8, column=0, sticky="ew", pady=(0, PADDING_STD*2))
+        self.prompt_entry.grid(row=8, column=0, sticky="ew", pady=(0, PADDING_STD))
         current_prompt = self.ai_service.config.get_system_prompt()
         if current_prompt:
              self.prompt_entry.insert(0, current_prompt)
 
+        theme_label = ctk.CTkLabel(main_frame, text="Theme", font=get_font_main(), anchor="w")
+        theme_label.grid(row=9, column=0, sticky="ew", pady=(0, 5))
+        
+        self.theme_var = ctk.StringVar(value=self.ai_service.config.get_theme())
+        self.theme_menu = ctk.CTkOptionMenu(
+            main_frame, 
+            values=["Light", "Dark"],
+            variable=self.theme_var,
+            font=get_font_main(),
+            height=40
+        )
+        self.theme_menu.grid(row=10, column=0, sticky="ew", pady=(0, PADDING_STD*2))
+
         btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-        btn_frame.grid(row=9, column=0, sticky="ew")
+        btn_frame.grid(row=11, column=0, sticky="ew")
         btn_frame.grid_columnconfigure(1, weight=1) 
         
         cancel_btn = ctk.CTkButton(
@@ -143,6 +168,7 @@ class SettingsDialog(ctk.CTkToplevel):
             fg_color="transparent", 
             border_width=1, 
             font=get_font_main(),
+            text_color=COLOR_TEXT,
             height=40,
             width=100
         )
@@ -165,6 +191,7 @@ class SettingsDialog(ctk.CTkToplevel):
         new_model = self.model_entry.get().strip()
         provider = self.provider_var.get()
         prompt = self.prompt_entry.get().strip()
+        theme = self.theme_var.get()
         
         if provider != "ollama" and not new_key:
             self.key_entry.configure(border_color=COLOR_ERROR)
@@ -173,7 +200,11 @@ class SettingsDialog(ctk.CTkToplevel):
         self.ai_service.config.update_credentials(new_key, new_model)
         self.ai_service.config.set_provider(provider)
         self.ai_service.config.set_system_prompt(prompt if prompt else None)
+        self.ai_service.config.set_theme(theme)
         self.ai_service.reload_config()
+        
+        # Apply theme immediately
+        ctk.set_appearance_mode(theme)
         
         if self.on_save_callback:
             self.on_save_callback()
@@ -186,11 +217,15 @@ class AutoCommitterApp(ctk.CTk):
         
         self.title("AI Auto-Committer")
         self.minsize(600, 500)
-        ctk.set_appearance_mode("Dark")
-        ctk.set_default_color_theme("blue")
+        self.title("AI Auto-Committer")
+        self.minsize(600, 500)
         
         self.git_service = GitService()
         self.ai_service = AIService()
+        
+        # Load Theme
+        ctk.set_appearance_mode(self.ai_service.config.get_theme())
+        ctk.set_default_color_theme("blue") # We override most things anyway
         
         # Restore geometry
         geo = self.ai_service.config.get_window_geometry()
@@ -234,20 +269,20 @@ class AutoCommitterApp(ctk.CTk):
             border_color="gray", 
             width=120,
             hover=False,
-            text_color=("gray10", "#DCE4EE"),
+            text_color=COLOR_HEADER_BTN_TEXT,
             font=ctk.CTkFont(family="Consolas", size=13, weight="bold")
         )
         self.branch_lbl.pack(side="left")
         
-        self.btn_push = ctk.CTkButton(header_frame, text="Push origin", width=100, command=self.push_repo, fg_color="transparent", border_width=1, font=get_font_main())
+        self.btn_push = ctk.CTkButton(header_frame, text="Push origin", width=100, command=self.push_repo, fg_color="transparent", border_width=1, font=get_font_main(), text_color=COLOR_TEXT)
         self.btn_push.pack(side="right", padx=5)
         self.interactive_elements.append(self.btn_push)
         
-        self.btn_pull = ctk.CTkButton(header_frame, text="Fetch origin", width=100, command=self.pull_repo, fg_color="transparent", border_width=1, font=get_font_main())
+        self.btn_pull = ctk.CTkButton(header_frame, text="Fetch origin", width=100, command=self.pull_repo, fg_color="transparent", border_width=1, font=get_font_main(), text_color=COLOR_TEXT)
         self.btn_pull.pack(side="right", padx=5)
         self.interactive_elements.append(self.btn_pull)
 
-        ctk.CTkButton(header_frame, text="⚙", width=30, command=self.open_settings, fg_color="transparent", font=get_font_main()).pack(side="right", padx=5)
+        ctk.CTkButton(header_frame, text="⚙", width=30, command=self.open_settings, fg_color="transparent", font=get_font_main(), text_color=COLOR_TEXT).pack(side="right", padx=5)
         
         main_split = ctk.CTkFrame(self, fg_color="transparent")
         main_split.grid(row=1, column=0, sticky="nsew", padx=0, pady=0)
@@ -256,19 +291,19 @@ class AutoCommitterApp(ctk.CTk):
         main_split.grid_columnconfigure(0, minsize=320, weight=0) 
         main_split.grid_columnconfigure(1, weight=1)
 
-        self.sidebar = ctk.CTkFrame(main_split, corner_radius=0, fg_color=("gray95", "#2b2b2b"))
+        self.sidebar = ctk.CTkFrame(main_split, corner_radius=0, fg_color=COLOR_SIDEBAR)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         self.sidebar.grid_rowconfigure(1, weight=1)
         self.sidebar.grid_columnconfigure(0, weight=1)
 
         sidebar_header = ctk.CTkFrame(self.sidebar, height=40, fg_color="transparent")
         sidebar_header.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
-        ctk.CTkLabel(sidebar_header, text="Changes", font=get_font_header()).pack(side="left")
+        ctk.CTkLabel(sidebar_header, text="Changes", font=get_font_header(), text_color=COLOR_LABEL_TEXT).pack(side="left")
         
         self.file_list_frame = ctk.CTkScrollableFrame(self.sidebar, fg_color="transparent")
         self.file_list_frame.grid(row=1, column=0, sticky="nsew", padx=0, pady=0)
 
-        form_frame = ctk.CTkFrame(self.sidebar, fg_color=("gray90", "#232323"), corner_radius=0)
+        form_frame = ctk.CTkFrame(self.sidebar, fg_color=COLOR_SIDEBAR, corner_radius=0)
         form_frame.grid(row=2, column=0, sticky="ew")
         form_frame.grid_columnconfigure(0, weight=1)
 
@@ -284,7 +319,8 @@ class AutoCommitterApp(ctk.CTk):
             form_frame, 
             text="✨ Generate AI Message", 
             command=self.generate_message_thread, 
-            fg_color="#5c6bc0", 
+            fg_color=COLOR_BTN_PRIMARY,
+            hover_color=COLOR_BTN_HOVER,
             height=30,
             font=ctk.CTkFont(family="Segoe UI", size=12)
         )
@@ -302,7 +338,7 @@ class AutoCommitterApp(ctk.CTk):
         self.commit_btn.grid(row=3, column=0, padx=10, pady=(0, 15), sticky="ew")
         self.interactive_elements.append(self.commit_btn)
 
-        diff_container = ctk.CTkFrame(main_split, corner_radius=0, fg_color=("white", "#1e1e1e"))
+        diff_container = ctk.CTkFrame(main_split, corner_radius=0, fg_color=COLOR_DIFF_BG)
         diff_container.grid(row=0, column=1, sticky="nsew")
         diff_container.grid_rowconfigure(0, weight=1)
         diff_container.grid_columnconfigure(0, weight=1)
@@ -311,12 +347,12 @@ class AutoCommitterApp(ctk.CTk):
             diff_container, 
             corner_radius=0, 
             fg_color="transparent",
-            segmented_button_fg_color="#2b2b2b",
-            segmented_button_selected_color="#5c6bc0",
-            segmented_button_unselected_color="#404040",
-            segmented_button_selected_hover_color="#7986cb",
-            segmented_button_unselected_hover_color="#505050",
-            text_color="#e0e0e0"
+            segmented_button_fg_color=COLOR_SIDEBAR,
+            segmented_button_selected_color=COLOR_BTN_PRIMARY,
+            segmented_button_unselected_color=("#d0d0d0", "#404040"),
+            segmented_button_selected_hover_color=COLOR_BTN_HOVER,
+            segmented_button_unselected_hover_color=("#e0e0e0", "#505050"),
+            text_color=COLOR_TEXT
         )
         self.diff_tabs.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         
@@ -477,6 +513,7 @@ class AutoCommitterApp(ctk.CTk):
                 text=f, 
                 variable=var, 
                 font=("Segoe UI", 12),
+                text_color=COLOR_TEXT,
                 command=self.update_diff_preview_wrapper 
             )
             chk.pack(anchor="w", pady=2, padx=5)
@@ -517,7 +554,7 @@ class AutoCommitterApp(ctk.CTk):
                 font=get_font_mono(), 
                 wrap="none", 
                 fg_color="transparent",
-                text_color=("black", "#d4d4d4")
+                text_color=COLOR_DIFF_TEXT
             )
             textbox.grid(row=0, column=0, sticky="nsew")
             
