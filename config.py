@@ -21,7 +21,7 @@ class ConfigManager:
                 "recent_repos": [], 
                 "provider": "gemini", 
                 "system_prompt": None,
-                "window_geometry": {"width": 1000, "height": 700} 
+                "window_geometry": {"width": 600, "height": 500} 
             }
         try:
             with open(self.settings_file, 'r') as f:
@@ -30,14 +30,14 @@ class ConfigManager:
                 if "recent_repos" not in data: data["recent_repos"] = []
                 if "provider" not in data: data["provider"] = "gemini"
                 if "system_prompt" not in data: data["system_prompt"] = None
-                if "window_geometry" not in data: data["window_geometry"] = {"width": 1000, "height": 700}
+                if "window_geometry" not in data: data["window_geometry"] = {"width": 600, "height": 500}
                 return data
         except:
              return {
                 "recent_repos": [], 
                 "provider": "gemini", 
                 "system_prompt": None,
-                "window_geometry": {"width": 1000, "height": 700}
+                "window_geometry": {"width": 600, "height": 500}
             }
 
     def save_settings(self):
@@ -99,7 +99,7 @@ class ConfigManager:
         self.save_settings()
 
     def get_window_geometry(self):
-        return self.settings.get("window_geometry", {"width": 1000, "height": 700})
+        return self.settings.get("window_geometry", {"width": 600, "height": 500})
 
     def set_window_geometry(self, width, height):
         self.settings["window_geometry"] = {"width": width, "height": height}

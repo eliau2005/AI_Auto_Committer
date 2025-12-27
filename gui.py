@@ -185,7 +185,7 @@ class AutoCommitterApp(ctk.CTk):
         super().__init__()
         
         self.title("AI Auto-Committer")
-        self.minsize(1000, 700)
+        self.minsize(600, 500)
         ctk.set_appearance_mode("Dark")
         ctk.set_default_color_theme("blue")
         
@@ -194,7 +194,7 @@ class AutoCommitterApp(ctk.CTk):
         
         # Restore geometry
         geo = self.ai_service.config.get_window_geometry()
-        w, h = geo.get("width", 1000), geo.get("height", 700)
+        w, h = geo.get("width", 800), geo.get("height", 600)
         self.geometry(f"{w}x{h}")
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
@@ -203,6 +203,7 @@ class AutoCommitterApp(ctk.CTk):
         self.status_message = ctk.StringVar(value="Ready")
         self.file_vars = {} 
         self.interactive_elements = []
+        self.recent_repo_map = {}
 
         self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=1)
@@ -359,26 +360,66 @@ class AutoCommitterApp(ctk.CTk):
         self.status_message.set(message)
 
     def load_recent_repos(self):
+        import os
         repos = self.ai_service.config.get_recent_repos()
-        if repos:
-            options = ["Select Repo..."] + repos
-            self.recent_menu.configure(values=options)
+        self.recent_repo_map = {}
+        display_names = []
+        
+        for path in repos:
+            name = os.path.basename(path)
+            if not name: name = path # Root or empty
+            
+            # Handle duplicates
+            if name in self.recent_repo_map and self.recent_repo_map[name] != path:
+                # Append part of path to disambiguate? For now just keep original mapping
+                # or use full path if duplicate name
+                # Simple fallback: use full path for duplicates
+                # But to keep logic simple for this user request:
+                name = f"{name} ({path})"
+            
+            self.recent_repo_map[name] = path
+            display_names.append(name)
+            
+        options = ["Browse..."] + display_names
+        self.recent_menu.configure(values=options)
 
     def on_recent_repo_select(self, choice):
-        if choice and choice != "Select Repo...":
-            self.repo_path.set(choice)
-            self.refresh_repo()
+        if choice == "Browse...":
+            self.select_directory()
+        elif choice and choice != "Select Repo...":
+            path = self.recent_repo_map.get(choice)
+            if path:
+                self.repo_path.set(path)
+                self.refresh_repo()
 
     def select_directory(self):
-        # We don't have a browse button in new header, maybe add to menu or toolbar?
-        # Actually let's just add "Add Local Repo..." to dropdown or a small btn.
-        # For now, just use recent menu or manual path if needed.
+        import os
         path = filedialog.askdirectory()
         if path:
             self.repo_path.set(path)
             self.ai_service.config.add_recent_repo(path)
             self.load_recent_repos()
+            
+            # Find the display name for this path
+            # We just reloaded, so check map
+            for name, p in self.recent_repo_map.items():
+                if p == path:
+                    self.recent_menu.set(name)
+                    break
+            
             self.refresh_repo()
+        else:
+            # Revert to previous or default if cancelled? 
+            # For now, just reset to what it was or current repo
+            current = self.repo_path.get()
+            # Try to find name for current path
+            if current:
+                 for name, p in self.recent_repo_map.items():
+                    if p == current:
+                        self.recent_menu.set(name)
+                        break
+            else:
+                self.recent_menu.set("Select Repo...")
 
     def toggle_all_files(self, select=True):
         # This function is no longer directly called by UI buttons in the new layout
@@ -572,9 +613,16 @@ class AutoCommitterApp(ctk.CTk):
         ErrorDialog(self, t, m)
 
     def on_closing(self):
-        w = self.winfo_width()
-        h = self.winfo_height()
-        self.ai_service.config.set_window_geometry(w, h)
+        # Use geometry string to get actual logical size, avoiding DPI scaling issues
+        try:
+            geo = self.geometry()
+            # Format is typically 'WxH+X+Y'
+            size = geo.split('+')[0]
+            w, h = map(int, size.split('x'))
+            self.ai_service.config.set_window_geometry(w, h)
+        except:
+             # Fallback if parsing fails (unlikely)
+            pass
         self.destroy()
 
 if __name__ == "__main__":
