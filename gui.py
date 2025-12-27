@@ -72,15 +72,15 @@ class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent, ai_service, on_save_callback=None):
         super().__init__(parent)
         self.title("Settings")
-        self.geometry("600x450")
+        self.geometry("800x600")
         self.grid_columnconfigure(0, weight=1)
         
         self.ai_service = ai_service
         self.on_save_callback = on_save_callback
         
         self.update_idletasks()
-        x = parent.winfo_x() + (parent.winfo_width() // 2) - 300
-        y = parent.winfo_y() + (parent.winfo_height() // 2) - 225
+        x = parent.winfo_x() + (parent.winfo_width() // 2) - 400
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - 300
         self.geometry(f"+{x}+{y}")
         
         self.attributes("-topmost", True)
@@ -185,13 +185,18 @@ class AutoCommitterApp(ctk.CTk):
         super().__init__()
         
         self.title("AI Auto-Committer")
-        self.geometry("1200x800")
         self.minsize(1000, 700)
         ctk.set_appearance_mode("Dark")
         ctk.set_default_color_theme("blue")
         
         self.git_service = GitService()
         self.ai_service = AIService()
+        
+        # Restore geometry
+        geo = self.ai_service.config.get_window_geometry()
+        w, h = geo.get("width", 1000), geo.get("height", 700)
+        self.geometry(f"{w}x{h}")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
         self.repo_path = ctk.StringVar()
         self.current_branch = ctk.StringVar(value="HEAD")
@@ -565,6 +570,12 @@ class AutoCommitterApp(ctk.CTk):
         
     def show_error(self, t, m):
         ErrorDialog(self, t, m)
+
+    def on_closing(self):
+        w = self.winfo_width()
+        h = self.winfo_height()
+        self.ai_service.config.set_window_geometry(w, h)
+        self.destroy()
 
 if __name__ == "__main__":
     app = AutoCommitterApp()
