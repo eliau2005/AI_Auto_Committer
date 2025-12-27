@@ -37,11 +37,19 @@ class AutoCommitterApp(ctk.CTk):
         self.terminal_text.configure(state="disabled")
         
         # 3. Message Preview
-        preview_label = ctk.CTkLabel(self, text="Commit Message Preview:", anchor="w")
-        preview_label.pack(fill="x", padx=10)
+        # Title
+        title_label = ctk.CTkLabel(self, text="Commit Title:", anchor="w")
+        title_label.pack(fill="x", padx=10, pady=(5, 0))
         
-        self.preview_text = ctk.CTkTextbox(self, height=200, font=("Consolas", 12))
-        self.preview_text.pack(fill="both", expand=True, padx=10, pady=5)
+        self.title_entry = ctk.CTkEntry(self, placeholder_text="Commit Summary")
+        self.title_entry.pack(fill="x", padx=10, pady=(0, 5))
+        
+        # Description
+        desc_label = ctk.CTkLabel(self, text="Commit Description:", anchor="w")
+        desc_label.pack(fill="x", padx=10)
+        
+        self.desc_text = ctk.CTkTextbox(self, height=150, font=("Consolas", 12))
+        self.desc_text.pack(fill="both", expand=True, padx=10, pady=5)
         
         # 4. Action Buttons
         btn_frame = ctk.CTkFrame(self)
@@ -90,11 +98,20 @@ class AutoCommitterApp(ctk.CTk):
                 self.log("No changes detected.")
                 return
 
-            message = self.ai_service.generate_commit_message(diff)
+            full_message = self.ai_service.generate_commit_message(diff)
             
-            # Update UI in main thread (simple tkinter usually handles this ok, but safer to schedule)
-            self.preview_text.delete("0.0", END)
-            self.preview_text.insert("0.0", message)
+            # Split into Title and Description
+            parts = full_message.split('\n', 1)
+            title = parts[0].strip()
+            description = parts[1].strip() if len(parts) > 1 else ""
+            
+            # Update UI in main thread
+            self.title_entry.delete(0, END)
+            self.title_entry.insert(0, title)
+            
+            self.desc_text.delete("0.0", END)
+            self.desc_text.insert("0.0", description)
+            
             self.log("Message generated.")
         except Exception as e:
             self.log(f"Error: {e}")
@@ -105,18 +122,25 @@ class AutoCommitterApp(ctk.CTk):
              self.log("Error: No path.")
              return
              
-        message = self.preview_text.get("0.0", END).strip()
-        if not message:
-            self.log("Error: Commit message is empty.")
+        title = self.title_entry.get().strip()
+        description = self.desc_text.get("0.0", END).strip()
+        
+        if not title:
+            self.log("Error: Commit title is empty.")
             return
+
+        full_message = f"{title}\n\n{description}" if description else title
 
         try:
              self.log("Staging files...")
              self.git_service.stage_all()
              self.log("Committing...")
-             self.git_service.commit_changes(message)
+             self.git_service.commit_changes(full_message)
              self.log("Success! Changes committed.")
-             self.preview_text.delete("0.0", END)
+             
+             # Clear fields after successful commit
+             self.title_entry.delete(0, END)
+             self.desc_text.delete("0.0", END)
         except Exception as e:
              self.log(f"Commit Error: {e}")
 
