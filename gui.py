@@ -5,81 +5,149 @@ from git_service import GitService
 from ai_service import AIService
 from exceptions import APIKeyError, AIServiceError, NetworkError
 
+# --- Configuration & Constants ---
+FONT_MAIN = ("Segoe UI", 14)
+FONT_HEADER = ("Segoe UI", 18, "bold")
+FONT_MONO = ("Consolas", 13)
+PADDING_STD = 15
+PADDING_INNER = 10
+COLOR_ERROR = "#ef5350"  # Soft red
+COLOR_SUCCESS = "#66bb6a" # Soft green
+
 class ErrorDialog(ctk.CTkToplevel):
     def __init__(self, parent, title, message):
         super().__init__(parent)
-        self.title("Error")
-        self.geometry("400x200")
+        self.title(title)
+        self.geometry("450x250")
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1) # Message area expands
+        
         # Center the window
         self.update_idletasks()
-        x = parent.winfo_x() + (parent.winfo_width() // 2) - 200
-        y = parent.winfo_y() + (parent.winfo_height() // 2) - 100
+        x = parent.winfo_x() + (parent.winfo_width() // 2) - 225
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - 125
         self.geometry(f"+{x}+{y}")
         
         self.attributes("-topmost", True)
         self.transient(parent)
-        self.grab_set() # Make modal
+        self.grab_set()
         
-        lbl_title = ctk.CTkLabel(self, text=title, font=("Helvetica", 16, "bold"), text_color="#ff5555")
-        lbl_title.pack(pady=(20, 10), padx=20)
+        # Title
+        lbl_title = ctk.CTkLabel(
+            self, 
+            text=title, 
+            font=FONT_HEADER, 
+            text_color=COLOR_ERROR
+        )
+        lbl_title.grid(row=0, column=0, padx=PADDING_STD, pady=(PADDING_STD, PADDING_INNER), sticky="ew")
         
-        lbl_msg = ctk.CTkLabel(self, text=message, wraplength=350)
-        lbl_msg.pack(pady=10, padx=20)
+        # Message (Scrollable if long)
+        msg_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        msg_frame.grid(row=1, column=0, padx=PADDING_STD, pady=PADDING_INNER, sticky="nsew")
         
-        btn = ctk.CTkButton(self, text="Dismiss", command=self.destroy, fg_color="#ff5555", hover_color="#cc0000")
-        btn.pack(pady=(10, 20))
+        lbl_msg = ctk.CTkLabel(
+            msg_frame, 
+            text=message, 
+            font=FONT_MAIN,
+            wraplength=380,
+            justify="left"
+        )
+        lbl_msg.pack(fill="both", expand=True)
+        
+        # Dismiss Button
+        btn = ctk.CTkButton(
+            self, 
+            text="Dismiss", 
+            command=self.destroy, 
+            font=FONT_MAIN,
+            fg_color=COLOR_ERROR, 
+            hover_color="#d32f2f",
+            height=40
+        )
+        btn.grid(row=2, column=0, padx=PADDING_STD, pady=PADDING_STD, sticky="ew")
 
 class SettingsDialog(ctk.CTkToplevel):
     def __init__(self, parent, ai_service, on_save_callback=None):
         super().__init__(parent)
         self.title("Settings")
-        self.geometry("500x300")
+        self.geometry("550x350")
+        self.grid_columnconfigure(0, weight=1)
+        
         self.ai_service = ai_service
         self.on_save_callback = on_save_callback
         
         # Center the window
         self.update_idletasks()
-        x = parent.winfo_x() + (parent.winfo_width() // 2) - 250
-        y = parent.winfo_y() + (parent.winfo_height() // 2) - 150
+        x = parent.winfo_x() + (parent.winfo_width() // 2) - 275
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - 175
         self.geometry(f"+{x}+{y}")
         
         self.attributes("-topmost", True)
         self.transient(parent)
         self.grab_set()
 
+        # Canvas for layout
+        main_frame = ctk.CTkFrame(self, fg_color="transparent")
+        main_frame.grid(row=0, column=0, sticky="nsew", padx=PADDING_STD, pady=PADDING_STD)
+        main_frame.grid_columnconfigure(0, weight=1)
+
+        # Header
+        header = ctk.CTkLabel(main_frame, text="Configuration", font=FONT_HEADER, anchor="w")
+        header.grid(row=0, column=0, sticky="ew", pady=(0, PADDING_STD))
+
         # API Key
-        key_label = ctk.CTkLabel(self, text="Gemini API Key:", anchor="w")
-        key_label.pack(fill="x", padx=20, pady=(20, 5))
+        key_label = ctk.CTkLabel(main_frame, text="Gemini API Key", font=FONT_MAIN, anchor="w")
+        key_label.grid(row=1, column=0, sticky="ew", pady=(0, 5))
         
-        self.key_entry = ctk.CTkEntry(self, placeholder_text="Enter your Gemini API Key")
-        self.key_entry.pack(fill="x", padx=20, pady=(0, 10))
+        self.key_entry = ctk.CTkEntry(main_frame, placeholder_text="Enter your Gemini API Key", height=40, font=FONT_MAIN)
+        self.key_entry.grid(row=2, column=0, sticky="ew", pady=(0, PADDING_STD))
         if self.ai_service.config.api_key:
             self.key_entry.insert(0, self.ai_service.config.api_key)
 
         # Model Name
-        model_label = ctk.CTkLabel(self, text="Model Name:", anchor="w")
-        model_label.pack(fill="x", padx=20, pady=(10, 5))
+        model_label = ctk.CTkLabel(main_frame, text="Model Name", font=FONT_MAIN, anchor="w")
+        model_label.grid(row=3, column=0, sticky="ew", pady=(0, 5))
         
-        self.model_entry = ctk.CTkEntry(self, placeholder_text="e.g. gemini-2.0-flash")
-        self.model_entry.pack(fill="x", padx=20, pady=(0, 20))
+        self.model_entry = ctk.CTkEntry(main_frame, placeholder_text="e.g. gemini-2.0-flash", height=40, font=FONT_MAIN)
+        self.model_entry.grid(row=4, column=0, sticky="ew", pady=(0, PADDING_STD*2))
         if self.ai_service.config.model_name:
             self.model_entry.insert(0, self.ai_service.config.model_name)
 
-        # Save Button
-        save_btn = ctk.CTkButton(self, text="Save Configuration", command=self.save_config, fg_color="green", hover_color="darkgreen")
-        save_btn.pack(pady=10)
+        # Buttons
+        btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        btn_frame.grid(row=5, column=0, sticky="ew")
+        btn_frame.grid_columnconfigure(1, weight=1) # Spacer
         
-        # Cancel Button
-        cancel_btn = ctk.CTkButton(self, text="Cancel", command=self.destroy, fg_color="transparent", border_width=1)
-        cancel_btn.pack(pady=(0, 20))
+        cancel_btn = ctk.CTkButton(
+            btn_frame, 
+            text="Cancel", 
+            command=self.destroy, 
+            fg_color="transparent", 
+            border_width=1, 
+            font=FONT_MAIN,
+            height=40,
+            width=100
+        )
+        cancel_btn.grid(row=0, column=0, padx=(0, 10))
+        
+        save_btn = ctk.CTkButton(
+            btn_frame, 
+            text="Save Configuration", 
+            command=self.save_config, 
+            fg_color=COLOR_SUCCESS, 
+            hover_color="#388e3c",
+            font=FONT_MAIN,
+            height=40,
+            width=150
+        )
+        save_btn.grid(row=0, column=2)
 
     def save_config(self):
         new_key = self.key_entry.get().strip()
         new_model = self.model_entry.get().strip()
         
         if not new_key:
-            # Simple validation visual cue
-            self.key_entry.configure(border_color="red")
+            self.key_entry.configure(border_color=COLOR_ERROR)
             return
             
         self.ai_service.config.update_credentials(new_key, new_model)
@@ -95,13 +163,20 @@ class AutoCommitterApp(ctk.CTk):
         super().__init__()
         
         self.title("AI Auto-Committer")
-        self.geometry("800x600")
+        self.geometry("900x700")
+        self.minsize(600, 500)
         ctk.set_appearance_mode("Dark")
+        ctk.set_default_color_theme("blue")
         
         self.git_service = GitService()
         self.ai_service = AIService()
         
         self.repo_path = ctk.StringVar()
+        
+        # Configure Grid Layout
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=0) # Path
+        self.grid_rowconfigure(1, weight=1) # Content Area
         
         self._setup_ui()
         
@@ -109,49 +184,114 @@ class AutoCommitterApp(ctk.CTk):
         self.after(100, self.check_api_key)
         
     def _setup_ui(self):
-        # 1. Path Selection
-        path_frame = ctk.CTkFrame(self)
-        path_frame.pack(fill="x", padx=10, pady=10)
-        
-        self.path_entry = ctk.CTkEntry(path_frame, textvariable=self.repo_path, placeholder_text="Select Repository Path...")
-        self.path_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        
-        browse_btn = ctk.CTkButton(path_frame, text="Browse", width=100, command=self.select_directory)
-        browse_btn.pack(side="right")
+        # --- 1. Top Bar (Path & Settings) ---
+        top_frame = ctk.CTkFrame(self, fg_color="transparent")
+        top_frame.grid(row=0, column=0, sticky="ew", padx=PADDING_STD, pady=PADDING_STD)
+        top_frame.grid_columnconfigure(1, weight=1)
 
-        settings_btn = ctk.CTkButton(path_frame, text="⚙ Settings", width=100, command=self.open_settings)
-        settings_btn.pack(side="right", padx=(0, 10))
+        lbl_path = ctk.CTkLabel(top_frame, text="Repository:", font=FONT_MAIN)
+        lbl_path.grid(row=0, column=0, padx=(0, 10))
+
+        self.path_entry = ctk.CTkEntry(
+            top_frame, 
+            textvariable=self.repo_path, 
+            placeholder_text="Select Repository Path...",
+            font=FONT_MAIN,
+            height=35
+        )
+        self.path_entry.grid(row=0, column=1, sticky="ew", padx=(0, 10))
         
-        # 2. Terminal / Status Output
-        self.terminal_text = ctk.CTkTextbox(self, height=100, fg_color="black", text_color="green", font=("Consolas", 12))
-        self.terminal_text.pack(fill="x", padx=10, pady=(0, 10))
+        browse_btn = ctk.CTkButton(
+            top_frame, 
+            text="Browse", 
+            width=100, 
+            height=35,
+            command=self.select_directory,
+            font=FONT_MAIN
+        )
+        browse_btn.grid(row=0, column=2, padx=(0, 10))
+
+        settings_btn = ctk.CTkButton(
+            top_frame, 
+            text="⚙", 
+            width=40, 
+            height=35,
+            command=self.open_settings,
+            font=FONT_MAIN
+        )
+        settings_btn.grid(row=0, column=3)
+        
+        # --- 2. Main Content Area ---
+        content_frame = ctk.CTkFrame(self)
+        content_frame.grid(row=1, column=0, sticky="nsew", padx=PADDING_STD, pady=(0, PADDING_STD))
+        content_frame.grid_columnconfigure(0, weight=1)
+        content_frame.grid_rowconfigure(2, weight=1) # Description
+        content_frame.grid_rowconfigure(4, weight=0) # Terminal
+        
+        # Commit Components
+        lbl_title = ctk.CTkLabel(content_frame, text="Commit Title", font=FONT_HEADER, anchor="w")
+        lbl_title.grid(row=0, column=0, sticky="ew", padx=PADDING_STD, pady=(PADDING_STD, 5))
+        
+        self.title_entry = ctk.CTkEntry(
+            content_frame, 
+            placeholder_text="Brief summary of changes",
+            font=FONT_MAIN,
+            height=40
+        )
+        self.title_entry.grid(row=1, column=0, sticky="ew", padx=PADDING_STD, pady=(0, PADDING_STD))
+        
+        lbl_desc = ctk.CTkLabel(content_frame, text="Description", font=FONT_HEADER, anchor="w")
+        lbl_desc.grid(row=2, column=0, sticky="ew", padx=PADDING_STD, pady=(0, 5))
+        
+        self.desc_text = ctk.CTkTextbox(
+            content_frame, 
+            font=FONT_MONO,
+            height=150
+        )
+        self.desc_text.grid(row=3, column=0, sticky="nsew", padx=PADDING_STD, pady=(0, PADDING_STD))
+        
+        # Terminal Output (Collapsible-ish feel, smaller)
+        lbl_term = ctk.CTkLabel(content_frame, text="Activity Log", font=("Segoe UI", 12), text_color="gray", anchor="w")
+        lbl_term.grid(row=4, column=0, sticky="ew", padx=PADDING_STD, pady=(0, 2))
+        
+        self.terminal_text = ctk.CTkTextbox(
+            content_frame, 
+            height=100, 
+            fg_color="#1e1e1e", 
+            text_color="#00e676", 
+            font=("Consolas", 11)
+        )
+        self.terminal_text.grid(row=5, column=0, sticky="ew", padx=PADDING_STD, pady=(0, PADDING_STD))
         self.terminal_text.insert("0.0", "Ready.\n")
         self.terminal_text.configure(state="disabled")
         
-        # 3. Message Preview
-        # Title
-        title_label = ctk.CTkLabel(self, text="Commit Title:", anchor="w")
-        title_label.pack(fill="x", padx=10, pady=(5, 0))
+        # --- 3. Action Buttons ---
+        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        btn_frame.grid(row=2, column=0, sticky="ew", padx=PADDING_STD, pady=(0, PADDING_STD))
+        btn_frame.grid_columnconfigure(0, weight=1)
+        btn_frame.grid_columnconfigure(1, weight=1)
         
-        self.title_entry = ctk.CTkEntry(self, placeholder_text="Commit Summary")
-        self.title_entry.pack(fill="x", padx=10, pady=(0, 5))
+        self.gen_btn = ctk.CTkButton(
+            btn_frame, 
+            text="✨ Generate Suggestion", 
+            command=self.generate_message_thread,
+            font=("Segoe UI", 15, "bold"),
+            height=50,
+            fg_color="#5c6bc0", 
+            hover_color="#3949ab"
+        )
+        self.gen_btn.grid(row=0, column=0, sticky="ew", padx=(0, 10))
         
-        # Description
-        desc_label = ctk.CTkLabel(self, text="Commit Description:", anchor="w")
-        desc_label.pack(fill="x", padx=10)
-        
-        self.desc_text = ctk.CTkTextbox(self, height=150, font=("Consolas", 12))
-        self.desc_text.pack(fill="both", expand=True, padx=10, pady=5)
-        
-        # 4. Action Buttons
-        btn_frame = ctk.CTkFrame(self)
-        btn_frame.pack(fill="x", padx=10, pady=10)
-        
-        self.gen_btn = ctk.CTkButton(btn_frame, text="Generate Message", command=self.generate_message_thread)
-        self.gen_btn.pack(side="left", fill="x", expand=True, padx=(0, 5))
-        
-        self.commit_btn = ctk.CTkButton(btn_frame, text="Commit Changes", command=self.commit_changes, fg_color="green", hover_color="darkgreen")
-        self.commit_btn.pack(side="right", fill="x", expand=True, padx=(5, 0))
+        self.commit_btn = ctk.CTkButton(
+            btn_frame, 
+            text="✓ Commit Changes", 
+            command=self.commit_changes, 
+            font=("Segoe UI", 15, "bold"),
+            height=50,
+            fg_color=COLOR_SUCCESS, 
+            hover_color="#388e3c"
+        )
+        self.commit_btn.grid(row=0, column=1, sticky="ew", padx=(10, 0))
 
     def log(self, message):
         self.terminal_text.configure(state="normal")
@@ -164,7 +304,6 @@ class AutoCommitterApp(ctk.CTk):
 
     def check_api_key(self):
         valid, msg = self.ai_service.config.validate()
-        # If not valid, open settings immediately
         if not valid:
              self.log("Configuration missing. Please set API Key.")
              self.open_settings()
@@ -181,6 +320,7 @@ class AutoCommitterApp(ctk.CTk):
             else:
                 self.log(f"Error: Invalid Git Repository at {path}")
                 self.repo_path.set("")
+                self.show_error("Invalid Repo", f"The directory:\n{path}\nis not a valid Git repository.")
 
     def generate_message_thread(self):
         threading.Thread(target=self.generate_message, daemon=True).start()
@@ -188,12 +328,13 @@ class AutoCommitterApp(ctk.CTk):
     def generate_message(self):
         path = self.repo_path.get()
         if not path:
-            self.log("Error: No repository path selected.")
+            self.show_error("Selection Required", "Please select a git repository first.")
             return
 
         self.log("Analyzing changes and generating message...")
+        # Disable buttons? Maybe later.
+        
         try:
-            # Re-init git service with correct path just in case
             if not self.git_service.is_valid_repo(path):
                  self.log("Error: Repo invalid.")
                  return
@@ -201,18 +342,17 @@ class AutoCommitterApp(ctk.CTk):
             diff = self.git_service.get_diff()
             if not diff:
                 self.log("No changes detected.")
+                self.after(0, lambda: self.show_error("No Changes", "There are no staged or unstaged changes to commit."))
                 return
 
             full_message = self.ai_service.generate_commit_message(diff)
             
-            # Split into Title and Description
             parts = full_message.split('\n', 1)
             title = parts[0].strip()
             description = parts[1].strip() if len(parts) > 1 else ""
             
-            # Update UI in main thread (using after to be thread-safe)
             self.after(0, lambda: self._update_ui_with_message(title, description))
-            self.after(0, lambda: self.log("Message generated."))
+            self.after(0, lambda: self.log("Message generated successfully."))
 
         except APIKeyError as e:
             self.after(0, lambda: self.show_error("API Authentication Error", str(e)))
@@ -233,14 +373,14 @@ class AutoCommitterApp(ctk.CTk):
     def commit_changes(self):
         path = self.repo_path.get()
         if not path:
-             self.log("Error: No path.")
+             self.show_error("Selection Required", "Please select a git repository first.")
              return
              
         title = self.title_entry.get().strip()
         description = self.desc_text.get("0.0", END).strip()
         
         if not title:
-            self.log("Error: Commit title is empty.")
+            self.show_error("Missing Info", "Commit title cannot be empty.")
             return
 
         full_message = f"{title}\n\n{description}" if description else title
@@ -252,9 +392,9 @@ class AutoCommitterApp(ctk.CTk):
              self.git_service.commit_changes(full_message)
              self.log("Success! Changes committed.")
              
-             # Clear fields after successful commit
              self.title_entry.delete(0, END)
              self.desc_text.delete("0.0", END)
+             self.log("Ready for next task.")
         except Exception as e:
              self.log(f"Commit Error: {e}")
              self.show_error("Commit Failed", str(e))
