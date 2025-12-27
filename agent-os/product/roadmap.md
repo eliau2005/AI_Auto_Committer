@@ -9,6 +9,11 @@
 7. [ ] Message Preview & Editing — Connect the AI response to the Message Preview text box, allowing user edits. `XS`
 8. [ ] Commit Execution — Implement the "Generate & Commit" button logic to run `git add .` and `git commit -m "..."` using the final message. `XS`
 9. [ ] Error Handling & Polish — Implement comprehensive error handling for no repo, no changes, API errors, and git locks. Add final UI polish (Dark mode checks). `S`
+10. [ ] Branch Awareness — Display the current active branch in the UI (e.g., top right corner). Prevent operations if in detached HEAD state. `XS`
+11. [ ] Selective Staging — Implement a file list with checkboxes to allow users to select specific files for the commit (replaces `git add .`). `M`
+12. [ ] Git Sync (Pull/Push) — Add "Pull" button to sync before starting and "Push" button after successful commit. Handle basic merge conflicts via alert. `M`
+13. [ ] Expanded AI Support — Add support for local LLMs (Ollama) and allow users to customize the System Prompt via settings. `M`
+14. [ ] Enhanced UX — Add "Recent Repositories" menu and Implement syntax highlighting (colors) for the diff output in the terminal window. `S`
 
 > Notes
 > - Order items by technical dependencies and product architecture

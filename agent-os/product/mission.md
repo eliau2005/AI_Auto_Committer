@@ -1,7 +1,7 @@
 # Product Mission
 
 ## Pitch
-AI Auto-Committer is a Windows GUI productivity tool that helps developers automate the Git commit process by providing AI-generated, meaningful commit messages and executing git commands with a single click.
+AI Auto-Committer is a robust Windows GUI productivity tool designed to be your daily driver for Git operations. It streamlines the entire workflow—from selective staging and AI-generated commit messages to syncing with remote repositories—all within a modern, minimalist interface.
 
 ## Users
 
@@ -13,21 +13,21 @@ AI Auto-Committer is a Windows GUI productivity tool that helps developers autom
 **The Efficient Developer** (25-45)
 - **Role:** Full-stack or Backend Developer
 - **Context:** Works on multiple projects, frequent context switching.
-- **Pain Points:** Writing repetitive commit messages, context switching to terminal for simple git operations.
-- **Goals:** Save time on administrative tasks, maintain a clean and professional commit history.
+- **Pain Points:** Writing repetitive commit messages, context switching to terminal for simple git operations, managing partial commits.
+- **Goals:** Save time on administrative tasks, maintain a clean and professional commit history, stay in flow.
 
 ## The Problem
 
 ### Friction in Git Workflow
-Writing descriptive commit messages breaks flow and takes time. Context switching between IDE and terminal for standard add/commit operations adds cognitive load. This often results in lazy commit messages like "fix" or "update".
+Writing descriptive commit messages breaks flow and takes time. Context switching between IDE and terminal for standard add/commit/push operations adds cognitive load. This often results in lazy commit messages or "wip" commits. Furthermore, staging specific files often requires tedious command-line work or complex GUI tools that feel bloated.
 
-**Our Solution:** An always-ready GUI that analyzes changes, writes the message for you using AI, and handles the git commands in one go.
+**Our Solution:** An always-ready, lightweight GUI that not only writes messages for you but handles the full cycle—staging, committing, pushing, and pulling—with precision and ease.
 
 ## Differentiators
 
-### Streamlined Windows Experience
-Unlike command-line aliases or complex IDE plugins, we provide a dedicated, lightweight, terminal-like GUI specifically designed for the Windows environment.
-This results in a frictionless, "one-click" commit experience that feels professional and native.
+### Streamlined "Daily Driver" Experience
+Unlike command-line aliases or complex IDE plugins, we provide a dedicated, lightweight, terminal-like GUI specifically designed for the Windows environment. We prioritize speed and focus, offering "just enough" control (like selective staging and branch awareness) without the bloat of full-featured Git clients.
+This results in a frictionless experience that feels professional and native.
 
 ## Key Features
 

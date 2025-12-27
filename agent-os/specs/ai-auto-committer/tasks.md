@@ -153,3 +153,69 @@ Recommended implementation sequence:
 3. Backend (AI Service)
 4. Frontend (GUI)
 5. Integration Verification
+
+## Phase 2: Daily Driver Features
+
+### Git & Core Logic Enhancements
+
+#### Task Group 6: Advanced Git Operations
+**Dependencies:** Task Group 2 (Git Service)
+
+- [x] 6.0 Implement Advanced Git Features
+  - [x] 6.1 Update GitService for Selective Staging
+    - Add `stage_files(path, file_list)` method
+    - Add `get_current_branch(path)` method
+    - Add `get_unstaged_files(path)` vs `get_staged_files(path)` distinction
+  - [x] 6.2 Implement Git Sync Operations
+    - Add `push_changes(path, remote="origin", branch=current)`
+    - Add `pull_changes(path)`
+    - Handle basic output/errors from these commands
+  - [x] 6.3 Write Tests for Advanced Git
+    - Test selective add (mocked)
+    - Test push/pull command construction
+
+**Acceptance Criteria:**
+- Backend supports partial staging, push, pull, and branch detection.
+
+### AI & Configuration Enhancements
+
+#### Task Group 7: Expanded AI Support
+**Dependencies:** Task Group 3 (AI Service)
+
+- [x] 7.0 Enhance AI & Config
+  - [x] 7.1 Implement Ollama Support
+    - specific client/url handling for local models
+  - [x] 7.2 Implement Prompt Configuration
+    - Allow loading Custom System Prompt from config/settings
+  - [x] 7.3 Update Settings UI (or Config logic)
+    - Persist "Recent Repos" list
+    - Persist selected Model Provider (OpenAI vs Ollama)
+
+**Acceptance Criteria:**
+- Can switch to Ollama local model.
+- Can edit system prompt or use custom one.
+
+### Frontend Enhancements
+
+#### Task Group 8: Daily Driver UX
+**Dependencies:** Task Group 4 & 6
+
+- [x] 8.0 Implement UX Improvements
+  - [x] 8.1 Branch Dispay & Sync Buttons
+    - Add Label for "Current Branch: [name]"
+    - Add "Pull" (Sync) button at top
+    - Add "Push" button (conditional or always visible)
+  - [x] 8.2 Recent Repositories Menu
+    - Add Dropdown or Menu for quick switching
+  - [x] 8.3 Selective Staging UI
+    - Replace/Augment simple change list with Checkbox List
+    - Connect checkboxes to `stage_files` logic
+  - [x] 8.4 Syntax Highlighting for Diff
+    - Enhance Terminal text widget to support tags/colors
+    - Parse diff output to colorize `+` (green) and `-` (red) lines
+
+**Acceptance Criteria:**
+- UI shows branch.
+- Users can check/uncheck files to commit.
+- Diff is colored.
+- Push/Pull buttons work.
