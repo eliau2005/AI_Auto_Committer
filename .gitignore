@@ -6,3 +6,7 @@ __pycache__/
 
 # User Settings
 settings.json
+
+# PyInstaller build artifacts
+build/
+*.spec
