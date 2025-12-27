@@ -612,9 +612,32 @@ class AutoCommitterApp(ctk.CTk):
                     return
                 msg = self.ai_service.generate_commit_message(diff)
                 
-                parts = msg.split('\n', 1)
-                title = parts[0].strip()
-                desc = parts[1].strip() if len(parts) > 1 else ""
+                # Clean up markdown formatting (Ollama often wraps in code blocks)
+                msg = msg.strip()
+                
+                # Remove markdown code block markers if present
+                if msg.startswith('```'):
+                    lines = msg.split('\n')
+                    # Remove first line if it's ```
+                    if lines[0].strip().startswith('```'):
+                        lines = lines[1:]
+                    # Remove last line if it's ```
+                    if lines and lines[-1].strip() == '```':
+                        lines = lines[:-1]
+                    msg = '\n'.join(lines).strip()
+                
+                # Split message into title and description
+                lines = msg.split('\n')
+                title = lines[0].strip() if lines else ""
+                
+                # Join remaining lines as description, skipping empty first line after title
+                desc_lines = []
+                for i, line in enumerate(lines[1:], 1):
+                    # Skip the first empty line after title (conventional commit format)
+                    if i == 1 and not line.strip():
+                        continue
+                    desc_lines.append(line)
+                desc = '\n'.join(desc_lines).strip()
                 
                 self.after(0, lambda: self._fill_form(title, desc))
                 self.after(0, lambda: self.status_message.set("AI message generated."))
