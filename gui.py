@@ -1,6 +1,8 @@
 import customtkinter as ctk
 from tkinter import filedialog, END
 import threading
+import os
+import sys
 from git_service import GitService
 from ai_service import AIService
 from exceptions import APIKeyError, AIServiceError, NetworkError
@@ -217,8 +219,58 @@ class AutoCommitterApp(ctk.CTk):
         
         self.title("AI Auto-Committer")
         self.minsize(600, 500)
-        self.title("AI Auto-Committer")
-        self.minsize(600, 500)
+        
+        # Set window icon for both window and taskbar
+        try:
+            icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.ico")
+            
+            # Use iconbitmap which should automatically select appropriate size from ICO
+            self.iconbitmap(default=icon_path)
+            
+            # For Windows: Ensure proper taskbar icon handling
+            if sys.platform == 'win32':
+                try:
+                    import ctypes
+                    # Set app user model ID for proper taskbar grouping
+                    myappid = 'eliau.ai_auto_committer.1.0'
+                    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+                    
+                    # Force Windows to use the ICO file for taskbar
+                    # This ensures it picks the right resolution (16x16 or 32x32)
+                    GWL_EXSTYLE = -20
+                    hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+                    if hwnd:
+                        # Load icon with proper size flags
+                        LR_LOADFROMFILE = 0x00000010
+                        LR_DEFAULTSIZE = 0x00000040
+                        IMAGE_ICON = 1
+                        
+                        # Load small icon (16x16) for taskbar
+                        hicon_small = ctypes.windll.user32.LoadImageW(
+                            0, icon_path, IMAGE_ICON, 16, 16, 
+                            LR_LOADFROMFILE | LR_DEFAULTSIZE
+                        )
+                        
+                        # Load large icon (32x32) for alt-tab
+                        hicon_large = ctypes.windll.user32.LoadImageW(
+                            0, icon_path, IMAGE_ICON, 32, 32,
+                            LR_LOADFROMFILE | LR_DEFAULTSIZE
+                        )
+                        
+                        # Set both icons
+                        WM_SETICON = 0x0080
+                        ICON_SMALL = 0
+                        ICON_BIG = 1
+                        
+                        if hicon_small:
+                            ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, ICON_SMALL, hicon_small)
+                        if hicon_large:
+                            ctypes.windll.user32.SendMessageW(hwnd, WM_SETICON, ICON_BIG, hicon_large)
+                except Exception as e:
+                    # If advanced icon setting fails, the basic iconbitmap should still work
+                    pass
+        except Exception as e:
+            pass  # Icon file not found, continue without it
         
         self.git_service = GitService()
         self.ai_service = AIService()
