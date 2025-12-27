@@ -17,12 +17,19 @@ class ConfigManager:
 
     def _load_settings(self):
         if not os.path.exists(self.settings_file):
-            return {
+            defaults = {
                 "recent_repos": [], 
                 "provider": "gemini", 
                 "system_prompt": None,
                 "window_geometry": {"width": 600, "height": 500} 
             }
+            try:
+                with open(self.settings_file, 'w') as f:
+                    json.dump(defaults, f, indent=4)
+            except Exception as e:
+                print(f"Error creating default settings file: {e}")
+            return defaults
+
         try:
             with open(self.settings_file, 'r') as f:
                 data = json.load(f)
