@@ -307,22 +307,27 @@ class AutoCommitterApp(ctk.CTk):
         diff_container.grid_rowconfigure(0, weight=1)
         diff_container.grid_columnconfigure(0, weight=1)
 
-        self.diff_text = ctk.CTkTextbox(
+        self.diff_tabs = ctk.CTkTabview(
             diff_container, 
-            font=get_font_mono(), 
-            wrap="none", 
+            corner_radius=0, 
             fg_color="transparent",
-            text_color=("black", "#d4d4d4")
+            segmented_button_fg_color="#2b2b2b",
+            segmented_button_selected_color="#5c6bc0",
+            segmented_button_unselected_color="#404040",
+            segmented_button_selected_hover_color="#7986cb",
+            segmented_button_unselected_hover_color="#505050",
+            text_color="#e0e0e0"
         )
-        self.diff_text.grid(row=0, column=0, sticky="nsew", padx=15, pady=15)
-        self.diff_text.configure(state="disabled")
+        self.diff_tabs.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
         
-        self.diff_text.tag_config("diff_add", foreground="#22863a", background="#f0fff4")
-        self.diff_text.tag_config("diff_rem", foreground="#cb2431", background="#ffeef0")
-        self.diff_text.tag_config("diff_header", foreground="#6f42c1")
-        
-        self.diff_text.tag_config("diff_add", foreground="#4cd964", background="#1a2e1e") 
-        self.diff_text.tag_config("diff_rem", foreground="#ff5252", background="#2e1a1a")
+        # Tags config map to apply to new text widgets
+        self.diff_tags = {
+            "diff_add": {"foreground": "#4cd964", "background": "#1a2e1e"},
+            "diff_rem": {"foreground": "#ff5252", "background": "#2e1a1a"},
+            "diff_header": {"foreground": "#6f42c1"}
+        }
+
+
 
         status_bar = ctk.CTkFrame(self, height=25, corner_radius=0, fg_color=("gray80", "#252526"))
         status_bar.grid(row=2, column=0, sticky="ew")
@@ -450,7 +455,11 @@ class AutoCommitterApp(ctk.CTk):
     def _clear_file_list(self):
         for w in self.file_list_frame.winfo_children(): w.destroy()
         self.file_vars = {}
-        self.update_diff_view("")
+        # Clear tabs
+        try:
+             for t in list(self.diff_tabs._tab_dict.keys()):
+                self.diff_tabs.delete(t)
+        except: pass
 
     def _refresh_file_list(self):
         self._clear_file_list()
@@ -463,51 +472,74 @@ class AutoCommitterApp(ctk.CTk):
         for f in files:
             var = ctk.BooleanVar(value=True)
             self.file_vars[f] = var
-            # command=self.on_file_select_change could filter diff
             chk = ctk.CTkCheckBox(
                 self.file_list_frame, 
                 text=f, 
                 variable=var, 
                 font=("Segoe UI", 12),
-                command=self.update_diff_preview_wrapper # auto update diff on check?
+                command=self.update_diff_preview_wrapper 
             )
             chk.pack(anchor="w", pady=2, padx=5)
         
-        # Auto load diff for all
         self.update_diff_preview_wrapper()
 
     def update_diff_preview_wrapper(self):
-        # Debounce?
-        selected = [f for f, v in self.file_vars.items() if v.get()]
-        if not selected: 
-            self.update_diff_view("")
-            return
+        # identified all selected for commit context
+        all_selected = [f for f, v in self.file_vars.items() if v.get()]
         
-        # Running diff on main thread for responsiveness if small. 
-        # If huge, thread it.
+        # Limit tabs to first 8 for display only
+        display_selection = set(all_selected[:8])
+        
         try:
-            diff = self.git_service.get_diff(files=selected)
-            self.update_diff_view(diff)
-        except Exception as e:
-            self.status_message.set(f"Error getting diff: {e}")
-            self.update_diff_view(f"Error loading diff: {e}")
+            current = set(self.diff_tabs._tab_dict.keys())
+        except:
+            current = set()
 
-    def update_diff_view(self, diff_text):
-        self.diff_text.configure(state="normal")
-        self.diff_text.delete("1.0", END)
-        if not diff_text:
-            self.diff_text.insert("0.0", "No files selected or no changes.")
-        else:
-            for line in diff_text.splitlines():
-                if line.startswith("diff --git"):
-                    self.diff_text.insert(END, line + "\n", "diff_header")
-                elif line.startswith("+") and not line.startswith("+++"):
-                    self.diff_text.insert(END, line + "\n", "diff_add")
-                elif line.startswith("-") and not line.startswith("---"):
-                    self.diff_text.insert(END, line + "\n", "diff_rem")
-                else:
-                    self.diff_text.insert(END, line + "\n")
-        self.diff_text.configure(state="disabled")
+        # Remove unselected or those that fell out of top 8
+        for t in current:
+            if t not in display_selection:
+                self.diff_tabs.delete(t)
+        
+        # Add new selected within limit
+        for f in display_selection:
+            if f not in current:
+                self._add_diff_tab(f)
+
+    def _add_diff_tab(self, filename):
+        try:
+            self.diff_tabs.add(filename)
+            tab = self.diff_tabs.tab(filename)
+            tab.grid_columnconfigure(0, weight=1)
+            tab.grid_rowconfigure(0, weight=1)
+            
+            textbox = ctk.CTkTextbox(
+                tab, 
+                font=get_font_mono(), 
+                wrap="none", 
+                fg_color="transparent",
+                text_color=("black", "#d4d4d4")
+            )
+            textbox.grid(row=0, column=0, sticky="nsew")
+            
+            for tag, kargs in self.diff_tags.items():
+                textbox.tag_config(tag, **kargs)
+            
+            diff_text = self.git_service.get_diff(files=[filename])
+            if not diff_text:
+                textbox.insert("0.0", "No changes detected.")
+            else:
+                 for line in diff_text.splitlines():
+                    if line.startswith("diff --git"):
+                        textbox.insert(END, line + "\n", "diff_header")
+                    elif line.startswith("+") and not line.startswith("+++"):
+                        textbox.insert(END, line + "\n", "diff_add")
+                    elif line.startswith("-") and not line.startswith("---"):
+                        textbox.insert(END, line + "\n", "diff_rem")
+                    else:
+                        textbox.insert(END, line + "\n")
+            textbox.configure(state="disabled")
+        except Exception as e:
+            print(f"Error adding tab {filename}: {e}")
 
     def pull_repo(self):
         self._run_async("Pulling...", self.git_service.pull_changes)
