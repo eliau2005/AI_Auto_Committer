@@ -1,0 +1,6 @@
+customtkinter
+gitpython
+openai
+requests
+python-dotenv
+pytest
