@@ -43,3 +43,4 @@ This results in a frictionless experience that feels professional and native.
 ### Advanced Features
 - **Git Repository Validation:** Ensures operations are only performed on valid repositories.
 - **Smart Diff Handling:** Manages large diffs intelligently to stay within API limits.
+------
