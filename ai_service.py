@@ -12,6 +12,18 @@ class AIService:
                 api_key=self.config.api_key,
             )
 
+    def reload_config(self):
+        """Reloads configuration and re-initializes the client."""
+        # Force a reload of the config manager's internal state
+        self.config = ConfigManager()
+        if self.config.api_key:
+            self.client = OpenAI(
+                base_url=self.config.api_base_url,
+                api_key=self.config.api_key,
+            )
+        else:
+            self.client = None
+
     def generate_commit_message(self, diff_text):
         if not self.client:
             raise APIKeyError("API Key not configured. Please check your .env file.")

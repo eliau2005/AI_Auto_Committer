@@ -29,6 +29,67 @@ class ErrorDialog(ctk.CTkToplevel):
         btn = ctk.CTkButton(self, text="Dismiss", command=self.destroy, fg_color="#ff5555", hover_color="#cc0000")
         btn.pack(pady=(10, 20))
 
+class SettingsDialog(ctk.CTkToplevel):
+    def __init__(self, parent, ai_service, on_save_callback=None):
+        super().__init__(parent)
+        self.title("Settings")
+        self.geometry("500x300")
+        self.ai_service = ai_service
+        self.on_save_callback = on_save_callback
+        
+        # Center the window
+        self.update_idletasks()
+        x = parent.winfo_x() + (parent.winfo_width() // 2) - 250
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - 150
+        self.geometry(f"+{x}+{y}")
+        
+        self.attributes("-topmost", True)
+        self.transient(parent)
+        self.grab_set()
+
+        # API Key
+        key_label = ctk.CTkLabel(self, text="Gemini API Key:", anchor="w")
+        key_label.pack(fill="x", padx=20, pady=(20, 5))
+        
+        self.key_entry = ctk.CTkEntry(self, placeholder_text="Enter your Gemini API Key")
+        self.key_entry.pack(fill="x", padx=20, pady=(0, 10))
+        if self.ai_service.config.api_key:
+            self.key_entry.insert(0, self.ai_service.config.api_key)
+
+        # Model Name
+        model_label = ctk.CTkLabel(self, text="Model Name:", anchor="w")
+        model_label.pack(fill="x", padx=20, pady=(10, 5))
+        
+        self.model_entry = ctk.CTkEntry(self, placeholder_text="e.g. gemini-2.0-flash")
+        self.model_entry.pack(fill="x", padx=20, pady=(0, 20))
+        if self.ai_service.config.model_name:
+            self.model_entry.insert(0, self.ai_service.config.model_name)
+
+        # Save Button
+        save_btn = ctk.CTkButton(self, text="Save Configuration", command=self.save_config, fg_color="green", hover_color="darkgreen")
+        save_btn.pack(pady=10)
+        
+        # Cancel Button
+        cancel_btn = ctk.CTkButton(self, text="Cancel", command=self.destroy, fg_color="transparent", border_width=1)
+        cancel_btn.pack(pady=(0, 20))
+
+    def save_config(self):
+        new_key = self.key_entry.get().strip()
+        new_model = self.model_entry.get().strip()
+        
+        if not new_key:
+            # Simple validation visual cue
+            self.key_entry.configure(border_color="red")
+            return
+            
+        self.ai_service.config.update_credentials(new_key, new_model)
+        self.ai_service.reload_config()
+        
+        if self.on_save_callback:
+            self.on_save_callback()
+            
+        self.destroy()
+
 class AutoCommitterApp(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -44,6 +105,9 @@ class AutoCommitterApp(ctk.CTk):
         
         self._setup_ui()
         
+        # Check API Key on startup
+        self.after(100, self.check_api_key)
+        
     def _setup_ui(self):
         # 1. Path Selection
         path_frame = ctk.CTkFrame(self)
@@ -54,6 +118,9 @@ class AutoCommitterApp(ctk.CTk):
         
         browse_btn = ctk.CTkButton(path_frame, text="Browse", width=100, command=self.select_directory)
         browse_btn.pack(side="right")
+
+        settings_btn = ctk.CTkButton(path_frame, text="⚙ Settings", width=100, command=self.open_settings)
+        settings_btn.pack(side="right", padx=(0, 10))
         
         # 2. Terminal / Status Output
         self.terminal_text = ctk.CTkTextbox(self, height=100, fg_color="black", text_color="green", font=("Consolas", 12))
@@ -91,6 +158,16 @@ class AutoCommitterApp(ctk.CTk):
         self.terminal_text.insert(END, f"> {message}\n")
         self.terminal_text.see(END)
         self.terminal_text.configure(state="disabled")
+
+    def open_settings(self):
+        SettingsDialog(self, self.ai_service, on_save_callback=lambda: self.log("Configuration updated."))
+
+    def check_api_key(self):
+        valid, msg = self.ai_service.config.validate()
+        # If not valid, open settings immediately
+        if not valid:
+             self.log("Configuration missing. Please set API Key.")
+             self.open_settings()
 
     def show_error(self, title, message):
         ErrorDialog(self, title, message)
