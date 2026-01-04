@@ -34,9 +34,12 @@ def test_generate_commit_message_api_error(mock_config):
         mock_client.chat.completions.create.side_effect = Exception("API Error")
 
         service = AIService()
-        message = service.generate_commit_message("diff content")
+        # Expect AIServiceError
+        from exceptions import AIServiceError
+        with pytest.raises(AIServiceError) as excinfo:
+            service.generate_commit_message("diff content")
         
-        assert "Error generating commit message" in message
+        assert "API Error" in str(excinfo.value)
 
 def test_truncation_logic(mock_config):
     with patch('ai_service.OpenAI') as MockOpenAI:
