@@ -59,7 +59,7 @@ class AIService:
             raise APIKeyError("API Key not configured. Please check your settings.")
 
         if not diff_text or not diff_text.strip():
-             return "Error: No changes detected to generate a message.", False
+             return "", "", False
 
         # Intelligent Truncation
         # Use a limit of 4000 tokens for the diff context.
@@ -70,11 +70,15 @@ class AIService:
             "You are a helpful assistant that generates professional git commit messages based on diffs. "
             "Rule 1: Use the conventional commits format if applicable. "
             "Rule 2: Keep the summary line under 50 characters. "
-            "Rule 3: One empty line after summary. "
+            "Rule 3: You must separate the Title and Description with '|||SEP|||'. "
+            "Format: Title|||SEP|||Description. "
             "Rule 4: Use a concise bulleted list for details in present tense."
         )
         
         system_prompt = self.config.get_system_prompt() or default_system_prompt
+        # Ensure separator instruction is present even if user provides custom prompt
+        if "|||SEP|||" not in system_prompt:
+            system_prompt += " IMPORTANT: You must separate the Title and Description with '|||SEP|||'."
 
         try:
             response = self.client.chat.completions.create(
@@ -84,7 +88,25 @@ class AIService:
                     {"role": "user", "content": f"Here is the git diff:\n\n{processed_diff}"}
                 ]
             )
-            return response.choices[0].message.content.strip(), truncated
+            content = response.choices[0].message.content.strip()
+            
+            # Robust Parsing
+            if "|||SEP|||" in content:
+                parts = content.split("|||SEP|||")
+                title = parts[0].strip()
+                desc = parts[1].strip() if len(parts) > 1 else ""
+            else:
+                # Fallback implementation
+                lines = content.split('\n')
+                title = lines[0].strip()
+                desc_lines = lines[1:]
+                # Remove leading empty lines from description
+                while desc_lines and not desc_lines[0].strip():
+                    desc_lines.pop(0)
+                desc = "\n".join(desc_lines).strip()
+            
+            return title, desc, truncated
+
         except Exception as e:
             error_str = str(e).lower()
             if "bx" in error_str or "401" in error_str or "unauthorized" in error_str or "api key" in error_str:

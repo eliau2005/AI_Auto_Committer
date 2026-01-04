@@ -111,26 +111,14 @@ class MainController:
         def _task():
             try:
                 diff = self.git.get_diff(files=files)
-                msg, truncated = self.ai.generate_commit_message(diff)
+                title, desc, truncated = self.ai.generate_commit_message(diff)
                 
                 self.state.truncation_warning = truncated
                 self._update_ui_safe(lambda: self.view.diff_view.set_warning(truncated))
                 
-                # Parsing logic from gui.py
-                msg = msg.strip()
-                if msg.startswith('```'):
-                    lines = msg.split('\n')
-                    if lines[0].strip().startswith('```'): lines = lines[1:]
-                    if lines and lines[-1].strip() == '```': lines = lines[:-1]
-                    msg = '\n'.join(lines).strip()
-                
-                lines = msg.split('\n')
-                title = lines[0].strip() if lines else ""
-                desc_lines = []
-                for i, line in enumerate(lines[1:], 1):
-                    if i == 1 and not line.strip(): continue
-                    desc_lines.append(line)
-                desc = '\n'.join(desc_lines).strip()
+                # Direct assignment from AI service which now handles parsing
+                self.state.commit_title = title
+                self.state.commit_description = desc
                 
                 self.state.commit_title = title
                 self.state.commit_description = desc

@@ -110,13 +110,35 @@ class CommitView(ctk.CTkFrame):
         return title, desc
 
     def set_commit_message(self, title, desc):
+        # Store current state
+        title_state = self.title_entry.cget("state")
+        # Textbox doesn't use standard cget for state in all versions/wrappers, 
+        # but CTkTextbox does have .configure(state=...)
+        # We can try to guess or just force normal then disable if needed.
+        
         try:
+            # Force normal to allow edit
+            if title_state == "disabled":
+                self.title_entry.configure(state="normal")
+            
+            # Textbox handling
+            # CTkTextbox state is 'normal' or 'disabled'
+            # We assume we want to write to it regardless
+            self.desc_text.configure(state="normal")
+
             self.title_entry.delete(0, END)
             self.title_entry.insert(0, title)
             self.desc_text.delete("0.0", END)
             self.desc_text.insert("0.0", desc)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error setting commit message: {e}")
+        finally:
+            # Restore state if it was disabled (for title)
+            if title_state == "disabled":
+                 self.title_entry.configure(state="disabled")
+                 # Check if we should disable description too?
+                 # Usually if title is disabled, description is too (loading state)
+                 self.desc_text.configure(state="disabled")
 
     def set_loading(self, is_loading):
         state = "disabled" if is_loading else "normal"
