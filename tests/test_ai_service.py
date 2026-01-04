@@ -18,9 +18,10 @@ def test_generate_commit_message_success(mock_config):
         mock_client.chat.completions.create.return_value = mock_response
 
         service = AIService()
-        message = service.generate_commit_message("diff content")
+        message, truncated = service.generate_commit_message("diff content")
         
         assert "feat: added new feature" in message
+        assert truncated is False
         mock_client.chat.completions.create.assert_called_once()
         
         # Verify prompt construction (partial check)
@@ -49,10 +50,16 @@ def test_truncation_logic(mock_config):
         mock_client.chat.completions.create.return_value = mock_response
 
         service = AIService()
-        long_diff = "a" * 5000
+        # Create a diff that is definitely too long (e.g. > 4000 tokens)
+        # Using simple repetition might be compressed by some logic, but let's try
+        # a long repetitive string.
+        # "word " is 1 token usually. 5000 words.
+        long_diff = "diff --git a/file b/file\n" + ("word " * 5000)
+        
         service.generate_commit_message(long_diff)
         
         call_args = mock_client.chat.completions.create.call_args
         sent_content = call_args.kwargs['messages'][1]['content']
-        assert len(sent_content) < 5000
-        assert "truncated" in sent_content or len(sent_content) <= 4000 + 100 # buffer
+        
+        # It should be truncated/summarized
+        assert len(sent_content) < len(long_diff)

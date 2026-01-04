@@ -1,0 +1,1 @@
+Enhance `git_service` and `ai_service` to explicitly detect and handle various programming languages. Improve handling of large non-code files.

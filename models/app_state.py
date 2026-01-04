@@ -9,6 +9,7 @@ class AppState:
         self._commit_title: str = ""
         self._commit_description: str = ""
         self._is_loading: bool = False
+        self._truncation_warning: bool = False
 
     @property
     def repo_path(self) -> str:
@@ -79,3 +80,13 @@ class AppState:
         if not isinstance(value, bool):
             raise TypeError("is_loading must be a boolean")
         self._is_loading = value
+
+    @property
+    def truncation_warning(self) -> bool:
+        return self._truncation_warning
+
+    @truncation_warning.setter
+    def truncation_warning(self, value: bool):
+        if not isinstance(value, bool):
+            raise TypeError("truncation_warning must be a boolean")
+        self._truncation_warning = value

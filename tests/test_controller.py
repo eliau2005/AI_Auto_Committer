@@ -62,7 +62,7 @@ def test_generate_message_flow(mock_thread, mock_deps):
     
     state.selected_files = {"file1.py"}
     git_service.get_diff.return_value = "diff content"
-    ai_service.generate_commit_message.return_value = "feat: title\n\ndescription"
+    ai_service.generate_commit_message.return_value = ("feat: title\n\ndescription", False)
     
     controller = MainController(state, window, git_service, ai_service)
     

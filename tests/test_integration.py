@@ -66,8 +66,9 @@ def test_full_flow_integration(temp_git_repo):
         assert "Modified content" in diff
         
         # 3. Generate Message
-        message = ai_service.generate_commit_message(diff)
+        message, truncated = ai_service.generate_commit_message(diff)
         assert message == "feat: updated test file"
+        assert truncated is False
         
     # 4. Commit
     git_service.stage_all()

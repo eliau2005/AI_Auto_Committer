@@ -5,8 +5,17 @@ from tkinter import END
 class DiffView(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, corner_radius=0, fg_color=styles.COLOR_DIFF_BG)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
+        
+        self.warning_label = ctk.CTkLabel(
+            self, 
+            text="⚠️ Some files were truncated or summarized due to size limits.",
+            fg_color="#F59E0B", # Amber
+            text_color="black",
+            corner_radius=6,
+            font=ctk.CTkFont(family="Segoe UI", size=12, weight="bold")
+        )
         
         self.diff_tabs = ctk.CTkTabview(
             self, 
@@ -19,8 +28,14 @@ class DiffView(ctk.CTkFrame):
             segmented_button_unselected_hover_color=("#e0e0e0", "#505050"),
             text_color=styles.COLOR_TEXT
         )
-        self.diff_tabs.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+        self.diff_tabs.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)
         
+    def set_warning(self, visible: bool):
+        if visible:
+            self.warning_label.grid(row=0, column=0, sticky="ew", padx=10, pady=(5,0))
+        else:
+            self.warning_label.grid_forget()
+            
     def update_diffs(self, diff_map: dict):
         """
         Updates the tabs with provided diffs.

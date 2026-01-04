@@ -35,7 +35,7 @@ def test_mvc_full_flow(mock_thread, temp_git_repo):
     
     # Mock AIService
     ai_service = MagicMock()
-    ai_service.generate_commit_message.return_value = "feat: integration test\n\ndetails"
+    ai_service.generate_commit_message.return_value = ("feat: integration test\n\ndetails", False)
     
     # Mock View
     window = MagicMock()

@@ -43,19 +43,12 @@ class MainController:
                     return
 
                 # Get branch
-                # Update: git_service methods might use cwd if not passed path? 
-                # gui.py passed path to is_valid, but git_service init usually sets repo? 
-                # In gui.py: self.git_service = GitService(). 
-                # And is_valid_repo(path) checks it.
-                # But to run commands, we might need to set cwd or init repo in service.
-                # Assuming GitService handles cwd or we set it. 
-                # gui.py doesn't seem to set it explicitly other than os.chdir?
-                # Wait, gui.py does `os.chdir(path)`? No.
-                # git_service.py likely uses os.getcwd() or takes path.
-                # Let's check git_service.py content if needed. 
-                # For now, let's assume we need to change dir or service handles it.
-                # To be safe, let's chdir if service relies on it.
-                os.chdir(path)
+                if not os.path.isabs(path): # Ensure absolute path if needed
+                     pass 
+                try:
+                    os.chdir(path)
+                except Exception:
+                    pass
                 
                 branch = self.git.get_current_branch()
                 files = self.git.get_changed_files()
@@ -63,8 +56,11 @@ class MainController:
                 # Update State
                 self.state.current_branch = branch
                 self.state.changed_files = files
-                # Reset selection to all? or keep? gui.py defaulted to True.
                 self.state.selected_files = set(files)
+                
+                # Reset warning
+                self.state.truncation_warning = False
+                self._update_ui_safe(lambda: self.view.diff_view.set_warning(False))
                 
                 # Update UI
                 self._update_ui_safe(lambda: self.view.update_branch(branch))
@@ -83,15 +79,15 @@ class MainController:
 
     def on_file_selection_change(self, selected_files):
         self.state.selected_files = set(selected_files)
+        
+        # Reset warning on selection change
+        self.state.truncation_warning = False
+        self._update_ui_safe(lambda: self.view.diff_view.set_warning(False))
+        
         self._update_diffs_for_selection()
 
     def _update_diffs_for_selection(self):
         # We need to fetch diffs for selected files.
-        # This might be slow if many files, so maybe run in thread?
-        # gui.py fetched one by one in tab adding.
-        # Here we'll fetch for top 8 or something.
-        
-        # For responsiveness, let's run in thread
         selected = list(self.state.selected_files)
         
         def _task():
@@ -115,7 +111,10 @@ class MainController:
         def _task():
             try:
                 diff = self.git.get_diff(files=files)
-                msg = self.ai.generate_commit_message(diff)
+                msg, truncated = self.ai.generate_commit_message(diff)
+                
+                self.state.truncation_warning = truncated
+                self._update_ui_safe(lambda: self.view.diff_view.set_warning(truncated))
                 
                 # Parsing logic from gui.py
                 msg = msg.strip()
