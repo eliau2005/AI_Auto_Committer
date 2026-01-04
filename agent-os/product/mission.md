@@ -1,46 +1,48 @@
 # Product Mission
 
 ## Pitch
-AI Auto-Committer is a robust Windows GUI productivity tool designed to be your daily driver for Git operations. It streamlines the entire workflow—from selective staging and AI-generated commit messages to syncing with remote repositories—all within a modern, minimalist interface.
+AI Auto-Committer is a professional Windows GUI productivity tool designed to be the definitive "daily driver" for Git operations. It transforms the tedious process of staging and committing into a streamlined, AI-powered experience, providing a modern, minimalist, and highly maintainable interface.
 
 ## Users
 
 ### Primary Customers
-- **Software Developers**: Professionals or hobbyists working in a Windows environment who want to streamline their workflow.
-- **Open Source Contributors**: Users who need to make frequent, well-documented commits.
+- **Windows-based Software Developers**: Professionals seeking a lightweight, high-performance alternative to bloated Git clients.
+- **Efficiency-Minded Engineers**: Developers who value flow and want to automate repetitive tasks like writing commit messages.
+- **Open Source Contributors**: Users who need to maintain clear, professional commit histories across multiple projects.
 
 ### User Personas
-**The Efficient Developer** (25-45)
-- **Role:** Full-stack or Backend Developer
-- **Context:** Works on multiple projects, frequent context switching.
-- **Pain Points:** Writing repetitive commit messages, context switching to terminal for simple git operations, managing partial commits.
-- **Goals:** Save time on administrative tasks, maintain a clean and professional commit history, stay in flow.
+**The High-Velocity Developer**
+- **Role:** Senior Full-stack Engineer
+- **Context:** Manages multiple microservices, performs dozens of small, focused commits daily.
+- **Pain Points:** Breaking flow to write descriptive commit messages, complex CLI commands for partial staging, slow startup times of heavy IDEs.
+- **Goals:** Automate the "boring" parts of Git, maintain high-quality documentation without manual effort, stay focused on code.
 
 ## The Problem
 
-### Friction in Git Workflow
-Writing descriptive commit messages breaks flow and takes time. Context switching between IDE and terminal for standard add/commit/push operations adds cognitive load. This often results in lazy commit messages or "wip" commits. Furthermore, staging specific files often requires tedious command-line work or complex GUI tools that feel bloated.
+### Friction and Inconsistency in Git Workflows
+Context switching between coding and documenting changes (writing commits) creates cognitive drag. Standard Git GUIs are often either too complex or too basic, failing to provide the specific "sweet spot" of selective staging paired with intelligent message generation. This leads to inconsistent commit quality and reduced productivity.
 
-**Our Solution:** An always-ready, lightweight GUI that not only writes messages for you but handles the full cycle—staging, committing, pushing, and pulling—with precision and ease.
+**Our Solution:** A dedicated, lightweight GUI built on a robust MVC architecture that provides smart, language-agnostic change analysis, automated message generation, and seamless remote synchronization.
 
 ## Differentiators
 
-### Streamlined "Daily Driver" Experience
-Unlike command-line aliases or complex IDE plugins, we provide a dedicated, lightweight, terminal-like GUI specifically designed for the Windows environment. We prioritize speed and focus, offering "just enough" control (like selective staging and branch awareness) without the bloat of full-featured Git clients.
-This results in a frictionless experience that feels professional and native.
+### Performance & Precision
+Unlike heavy Electron-based apps or generic IDE plugins, AI Auto-Committer is a native-feeling Python/CustomTkinter application optimized for speed and specific Git workflows.
+- **Smart Context:** Intelligent diff truncation and language-agnostic processing ensure the AI always has the right context.
+- **Architectural Integrity:** A clean MVC/MVVM structure ensures the application is stable, testable, and easy to extend.
+- **Windows Optimized:** Designed specifically for the Windows developer ecosystem, fitting perfectly into the professional aesthetic.
 
 ## Key Features
 
-### Core Features
-- **Smart Change Detection:** Automatically detects changes in the selected repository (`git diff`).
-- **One-Click Commit:** Executes `git add` and `git commit` seamlessly.
-- **Terminal-Style GUI:** A minimalist, dark-themed interface that fits the developer aesthetic.
+### Core & Productivity Features
+- **Smart Selective Staging:** Effortlessly select exactly which files or chunks to include in a commit.
+- **One-Click Sync:** Integrated Pull/Push workflows with branch awareness to keep your local and remote in sync.
+- **MVC Architecture:** Separation of concerns between UI, business logic, and state management for maximum reliability.
 
-### AI Features
-- **AI Message Generation:** Uses LLMs (OpenAI/Claude) to write concise, professional commit messages based on actual code changes.
-- **Message Preview:** Allows users to review and edit the generated message before committing.
+### AI & Intelligence
+- **Context-Aware Message Generation:** Smart diff handling that prioritizes meaningful code changes for better AI summaries.
+- **Language Agnostic Support:** Explicitly supports all programming languages and intelligently handles non-code assets.
 
-### Advanced Features
-- **Git Repository Validation:** Ensures operations are only performed on valid repositories.
-- **Smart Diff Handling:** Manages large diffs intelligently to stay within API limits.
-------
+### Advanced Robustness
+- **Proactive Validation:** Startup checks for Git dependencies and robust configuration validation.
+- **Specific Error Handling:** Clear, actionable feedback for network issues, Git locks, and API errors.
