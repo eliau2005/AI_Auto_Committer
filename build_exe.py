@@ -30,6 +30,10 @@ def build():
     # PyInstaller לפעמים דורש אות גדולה בייבוא
     install_package("pyinstaller", "PyInstaller") 
     install_package("customtkinter")
+    install_package("python-dotenv", "dotenv")
+    install_package("openai")
+    install_package("GitPython", "git")
+    install_package("tiktoken")
     
     # 2. קבלת נתיב הנתונים של customtkinter
     try:
@@ -52,6 +56,7 @@ def build():
         "--name", APP_NAME,
         "--icon", "icon.ico",
         "--add-data", add_data_arg,
+        "--collect-all", "tiktoken",
         MAIN_SCRIPT
     ]
     
