@@ -40,7 +40,8 @@ class SettingsDialog(ctk.CTkToplevel):
             values=["gemini", "ollama", "openai"],
             variable=self.provider_var,
             font=styles.get_font_main(),
-            height=40
+            height=40,
+            command=self.update_model_list
         )
         self.provider_menu.grid(row=2, column=0, sticky="ew", pady=(0, styles.PADDING_STD))
 
@@ -55,10 +56,20 @@ class SettingsDialog(ctk.CTkToplevel):
         model_label = ctk.CTkLabel(main_frame, text="Model Name", font=styles.get_font_main(), anchor="w")
         model_label.grid(row=5, column=0, sticky="ew", pady=(0, 5))
         
-        self.model_entry = ctk.CTkEntry(main_frame, placeholder_text="e.g. gemini-2.0-flash", height=40, font=styles.get_font_main())
-        self.model_entry.grid(row=6, column=0, sticky="ew", pady=(0, styles.PADDING_STD))
+        self.model_menu = ctk.CTkComboBox(
+            main_frame, 
+            values=[],
+            height=40, 
+            font=styles.get_font_main()
+        )
+        self.model_menu.grid(row=6, column=0, sticky="ew", pady=(0, styles.PADDING_STD))
+        
+        # Initialize model list
+        self.update_model_list(self.provider_var.get())
+        
+        # Set current model if available
         if self.ai_service.config.model_name:
-            self.model_entry.insert(0, self.ai_service.config.model_name)
+             self.model_menu.set(self.ai_service.config.model_name)
             
         prompt_label = ctk.CTkLabel(main_frame, text="Custom System Prompt (Optional)", font=styles.get_font_main(), anchor="w")
         prompt_label.grid(row=7, column=0, sticky="ew", pady=(0, 5))
@@ -111,9 +122,17 @@ class SettingsDialog(ctk.CTkToplevel):
         )
         save_btn.grid(row=0, column=2)
 
+    def update_model_list(self, provider):
+        models = self.ai_service.config.get_supported_models(provider)
+        self.model_menu.configure(values=models)
+        if models:
+            self.model_menu.set(models[0])
+        else:
+            self.model_menu.set("")
+
     def save_config(self):
         new_key = self.key_entry.get().strip()
-        new_model = self.model_entry.get().strip()
+        new_model = self.model_menu.get().strip()
         provider = self.provider_var.get()
         prompt = self.prompt_entry.get().strip()
         theme = self.theme_var.get()

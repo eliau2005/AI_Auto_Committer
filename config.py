@@ -2,6 +2,19 @@ import os
 import json
 from dotenv import load_dotenv, set_key
 
+PROVIDER_MODELS = {
+    "gemini": [
+        "gemini-3-pro-preview", "gemini-3-flash-preview", 
+        "gemini-2.5-pro", "gemini-2.5-flash",
+        "gemini-2.5-flash-lite"
+    ],
+    "openai": [
+        "gpt-5.2-2025-12-11", "gpt-5-mini-2025-08-07", "gpt-5-nano-2025-08-07",
+        "gpt-5.2-pro-2025-12-11"
+    ],
+    "ollama": ["llama3", "mistral", "gemma", "codellama", "qwen2.5-coder", "deepseek-coder"]
+}
+
 class ConfigManager:
     def __init__(self):
         load_dotenv()
@@ -121,3 +134,6 @@ class ConfigManager:
     def set_theme(self, theme):
         self.settings["theme"] = theme
         self.save_settings()
+
+    def get_supported_models(self, provider):
+        return PROVIDER_MODELS.get(provider, [])
